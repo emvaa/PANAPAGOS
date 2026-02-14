@@ -47,18 +47,6 @@ export default function WalletPage() {
   ])
   const [filteredTransactions, setFilteredTransactions] = useState(transactions)
 
-  const handleSearch = (query: string) => {
-    if (!query.trim()) {
-      setFilteredTransactions(transactions)
-      return
-    }
-
-    const filtered = transactions.filter(tx => 
-      tx.description.toLowerCase().includes(query.toLowerCase())
-    )
-    setFilteredTransactions(filtered)
-  }
-
   return (
     <DashboardLayout>
       <PrivacyMode onToggle={setPrivacyMode}>
@@ -111,7 +99,10 @@ export default function WalletPage() {
           transition={{ delay: 0.3 }}
           className="mt-8"
         >
-          <SmartSearch onSearch={handleSearch} />
+          <SmartSearch 
+            transactions={transactions}
+            onSearch={setFilteredTransactions} 
+          />
         </motion.div>
 
         {/* Transactions */}
