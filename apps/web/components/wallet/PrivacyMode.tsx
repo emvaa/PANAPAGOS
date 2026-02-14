@@ -22,9 +22,9 @@ export function PrivacyMode({ children, onToggle }: PrivacyModeProps) {
 
     const handleDeviceMotion = (event: DeviceMotionEvent) => {
       const acceleration = event.accelerationIncludingGravity
-      if (!acceleration) return
+      if (!acceleration || !acceleration.x || !acceleration.y || !acceleration.z) return
 
-      const { x = 0, y = 0, z = 0 } = acceleration
+      const { x, y, z } = acceleration
 
       // Calculate shake intensity
       const deltaX = Math.abs(x - lastX)

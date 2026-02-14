@@ -16,7 +16,15 @@ export default function WalletPage() {
   const [showBalance, setShowBalance] = useState(true)
   const [privacyMode, setPrivacyMode] = useState(false)
   const [currency, setCurrency] = useState<'PYG' | 'USD'>('PYG')
-  const [transactions, setTransactions] = useState([
+  const [transactions, setTransactions] = useState<Array<{
+    id: string
+    type: 'INCOME' | 'EXPENSE' | 'TRANSFER'
+    description: string
+    amount: number
+    currency: string
+    status: 'COMPLETED' | 'PENDING' | 'FAILED'
+    createdAt: string
+  }>>([
     {
       id: '1',
       type: 'INCOME',
@@ -101,7 +109,7 @@ export default function WalletPage() {
         >
           <SmartSearch 
             transactions={transactions}
-            onSearch={setFilteredTransactions} 
+            onSearch={(results) => setFilteredTransactions(results as any)} 
           />
         </motion.div>
 
