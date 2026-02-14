@@ -61,9 +61,8 @@ export default function WalletPage() {
 
   return (
     <DashboardLayout>
-      <PrivacyMode enabled={privacyMode} onToggle={setPrivacyMode} />
-      
-      <div className="max-w-7xl mx-auto">
+      <PrivacyMode onToggle={setPrivacyMode}>
+        <div className="max-w-7xl mx-auto">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -132,6 +131,7 @@ export default function WalletPage() {
           <TransactionList transactions={filteredTransactions} />
         </motion.div>
       </div>
+      </PrivacyMode>
     </DashboardLayout>
   )
 }
