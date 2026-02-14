@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test PANAPAGOS</title>
+    <style>
+        body { font-family: Arial; padding: 20px; background: #1a1a1a; color: white; }
+        .container { max-width: 600px; margin: 0 auto; }
+        input, textarea, select, button { 
+            width: 100%; 
+            padding: 10px; 
+            margin: 10px 0; 
+            font-size: 16px;
+        }
+        button { 
+            background: gold; 
+            color: black; 
+            border: none; 
+            cursor: pointer; 
+            font-weight: bold;
+        }
+        .result { 
+            background: #2a2a2a; 
+            padding: 15px; 
+            margin: 20px 0; 
+            border-radius: 5px;
+            word-break: break-all;
+        }
+        .error { color: red; }
+        .success { color: lime; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test PANAPAGOS Frontend</h1>
+        
+        <h2>Paso 1: Obtener Merchant</h2>
+        <button onclick="getMerchant()">Obtener Merchant</button>
+        <div id="merchantResult" class="result"></div>
+        
+        <h2>Paso 2: Crear Pago</h2>
+        <input type="number" id="amount" placeholder="Monto (ej: 100000)" value="100000">
+        <select id="currency">
+            <option value="PYG">PYG</option>
+            <option value="USD">USD</option>
+        </select>
+        <textarea id="description" placeholder="Descripción">Test desde HTML</textarea>
+        <button onclick="createPayment()">Crear Pago</button>
+        <div id="paymentResult" class="result"></div>
+    </div>
+
+    <script>
+        const API_URL = 'https://panapagos.onrender.com';
+        let merchantId = null;
+
+        async function getMerchant() {
+            const resultDiv = document.getElementById('merchantResult');
+            resultDiv.innerHTML = '⏳ Obteniendo merchant...';
+            
+            try {
+                const response = await fetch(`${API_URL}/v1/checkout/merchant`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                merchantId = data.id;
+                
+                resultDiv.innerHTML = `
+                    <div class="success">✅ Merchant obtenido</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">❌ Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        async function createPayment() {
+            const resultDiv = document.getElementById('paymentResult');
+            
+            if (!merchantId) {
+                resultDiv.innerHTML = '<div class="error">❌ Primero obtené el merchant</div>';
+                return;
+            }
+            
+            resultDiv.innerHTML = '⏳ Creando pago...';
+            
+            const amount = document.getElementById('amount').value;
+            const currency = document.getElementById('currency').value;
+            const description = document.getElementById('description').value;
+            
+            try {
+                const response = await fetch(`${API_URL}/v1/checkout/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        merchantId: merchantId,
+                        amount: parseFloat(amount),
+                        currency: currency,
+                        description: description,
+                        expirationSeconds: 3600
+                    })
+                });
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                const data = await response.json();
+                
+                resultDiv.innerHTML = `
+                    <div class="success">✅ Pago creado exitosamente</div>
+                    <pre>${JSON.stringify(data, null, 2)}</pre>
+                    <a href="${data.paymentLink}" target="_blank" style="color: gold;">
+                        🔗 Abrir link de pago
+                    </a>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">❌ Error: ${error.message}</div>
+                `;
+            }
+        }
+
+        // Auto-test al cargar
+        window.onload = () => {
+            console.log('🧪 Test page loaded');
+            console.log('API URL:', API_URL);
+        };
+    </script>
+</body>
+</html>

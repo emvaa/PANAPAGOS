@@ -58,13 +58,17 @@ export class StripeGateway {
       // Validate input
       this.validatePaymentRequest(request)
 
-      // Use real Stripe SDK if available, otherwise mock
-      if (!this.stripe || !this.apiKey || this.apiKey.startsWith('sk_test_YOUR')) {
-        this.logger.warn('Stripe not configured, using mock mode')
-        return this.mockStripePayment(request)
-      }
+      // Use mock mode for demo (Stripe requires tokenization in production)
+      // TODO: Implement Stripe Elements in frontend for production
+      this.logger.warn('Using mock Stripe mode for demo')
+      return this.mockStripePayment(request)
 
       // Create payment intent with Stripe SDK
+      // NOTE: This is disabled for demo. In production, use Stripe Elements
+      // to tokenize cards on the frontend instead of sending raw card data
+      throw new Error('Direct card API disabled. Use Stripe Elements for tokenization.')
+      
+      /*
       const paymentIntent = await this.stripe.paymentIntents.create({
         amount: Math.round(request.amount * 100), // Stripe uses cents
         currency: request.currency.toLowerCase(),
@@ -104,6 +108,8 @@ export class StripeGateway {
           : 'Payment requires additional action',
         requiresAction: paymentIntent.status === 'requires_action',
         clientSecret: paymentIntent.client_secret,
+      })
+      */
       }
     } catch (error) {
       this.logger.error(`Stripe payment failed: ${error.message}`, error.stack)
