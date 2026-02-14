@@ -20,18 +20,28 @@ export function CreatePaymentModal({ onClose, onSubmit }: CreatePaymentModalProp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    // Obtener merchantId dinámicamente
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
-    const merchantRes = await fetch(`${apiUrl}/v1/checkout/merchant`)
-    const merchant = await merchantRes.json()
-    
-    onSubmit({
-      merchantId: merchant.id,
-      amount: parseFloat(formData.amount),
-      currency: formData.currency,
-      description: formData.description,
-      expirationSeconds: parseInt(formData.expirationHours) * 3600,
-    })
+    try {
+      // Obtener merchantId dinámicamente desde el backend
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+      const merchantRes = await fetch(`${apiUrl}/v1/checkout/merchant`)
+      
+      if (!merchantRes.ok) {
+        throw new Error('Error al obtener merchant')
+      }
+      
+      const merchant = await merchantRes.json()
+      
+      onSubmit({
+        merchantId: merchant.id,
+        amount: parseFloat(formData.amount),
+        currency: formData.currency,
+        description: formData.description,
+        expirationSeconds: parseInt(formData.expirationHours) * 3600,
+      })
+    } catch (error) {
+      console.error('Error en handleSubmit:', error)
+      alert('Error al crear el pago. Por favor intenta de nuevo.')
+    }
   }
 
   return (
