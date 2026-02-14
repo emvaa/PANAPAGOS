@@ -28,4 +28,9 @@ export class CheckoutController {
   async getTransaction(@Param('id') id: string) {
     return this.checkoutService.getTransactionStatus(id)
   }
+
+  @Get('merchant')
+  async getMerchant() {
+    return this.checkoutService.getDefaultMerchant()
+  }
 }

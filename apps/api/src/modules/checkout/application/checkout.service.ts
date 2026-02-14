@@ -332,4 +332,12 @@ export class CheckoutService {
 
     return 'unknown'
   }
+
+  async getDefaultMerchant() {
+    const merchant = await this.transactionRepo['prisma'].merchant.findFirst()
+    if (!merchant) {
+      throw new NotFoundException('No merchant found')
+    }
+    return { id: merchant.id, name: merchant.name, email: merchant.email }
+  }
 }

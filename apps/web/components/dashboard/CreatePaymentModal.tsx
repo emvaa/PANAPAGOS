@@ -17,11 +17,16 @@ export function CreatePaymentModal({ onClose, onSubmit }: CreatePaymentModalProp
     expirationHours: '24',
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Obtener merchantId dinámicamente
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+    const merchantRes = await fetch(`${apiUrl}/v1/checkout/merchant`)
+    const merchant = await merchantRes.json()
+    
     onSubmit({
-      merchantId: 'cmll2557e0000deqnuasrxhvj', // ID del merchant demo
+      merchantId: merchant.id,
       amount: parseFloat(formData.amount),
       currency: formData.currency,
       description: formData.description,
