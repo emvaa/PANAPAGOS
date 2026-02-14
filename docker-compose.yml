@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: oropay-postgres
+    environment:
+      POSTGRES_USER: oropay
+      POSTGRES_PASSWORD: oropay_secure_password
+      POSTGRES_DB: oropay
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - oropay-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: oropay-redis
+    command: redis-server --requirepass oropay_redis_password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - oropay-network
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: oropay-api
+    environment:
+      DATABASE_URL: postgresql://oropay:oropay_secure_password@postgres:5432/oropay
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: oropay_redis_password
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - oropay-network
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    container_name: oropay-web
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:4000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    networks:
+      - oropay-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  oropay-network:
+    driver: bridge

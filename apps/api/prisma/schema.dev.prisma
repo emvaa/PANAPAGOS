@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Merchant {
+  id              String   @id @default(cuid())
+  name            String
+  email           String   @unique
+  ruc             String   @unique
+  apiKey          String   @unique
+  apiSecret       String
+  shopProcessId   String   @unique
+  privateKey      String
+  isActive        Int      @default(1)
+  commissionRate  Float    @default(2.5)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  transactions    Transaction[]
+  paymentLinks    PaymentLink[]
+  auditLogs       AuditLog[]
+
+  @@map("merchants")
+}
+
+model Transaction {
+  id                String   @id @default(cuid())
+  merchantId        String
+  amount            Float
+  currency          String   @default("PYG")
+  description       String
+  status            String   @default("PENDING")
+  paymentMethod     String?
+  cardBrand         String?
+  cardLastFour      String?
+  documentType      String
+  documentNumber    String
+  authorizationCode String?
+  bancardTicket     String?
+  errorMessage      String?
+  ipAddress         String?
+  userAgent         String?
+  metadata          String?
+  processedAt       DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  merchant          Merchant     @relation(fields: [merchantId], references: [id])
+  paymentLink       PaymentLink?
+  settlement        Settlement?
+  auditLogs         AuditLog[]
+
+  @@map("transactions")
+}
+
+model PaymentLink {
+  id             String    @id @default(cuid())
+  merchantId     String
+  transactionId  String    @unique
+  shortCode      String    @unique
+  amount         Float
+  currency       String    @default("PYG")
+  description    String
+  expiresAt      DateTime
+  isActive       Int       @default(1)
+  maxUses        Int       @default(1)
+  usedCount      Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  merchant       Merchant     @relation(fields: [merchantId], references: [id])
+  transaction    Transaction  @relation(fields: [transactionId], references: [id])
+
+  @@map("payment_links")
+}
+
+model Settlement {
+  id              String    @id @default(cuid())
+  transactionId   String    @unique
+  merchantId      String
+  grossAmount     Float
+  commissionAmount Float
+  netAmount       Float
+  status          String    @default("PENDING")
+  settledAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  transaction     Transaction @relation(fields: [transactionId], references: [id])
+
+  @@map("settlements")
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  merchantId     String?
+  transactionId  String?
+  action         String
+  entity         String
+  entityId       String
+  changes        String?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  merchant       Merchant?     @relation(fields: [merchantId], references: [id])
+  transaction    Transaction?  @relation(fields: [transactionId], references: [id])
+
+  @@map("audit_logs")
+}

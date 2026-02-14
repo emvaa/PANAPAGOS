@@ -1,0 +1,304 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Merchant {
+  id              String   @id @default(cuid())
+  name            String
+  email           String   @unique
+  ruc             String   @unique
+  apiKey          String   @unique
+  apiSecret       String
+  shopProcessId   String   @unique
+  privateKey      String
+  isActive        Int      @default(1)
+  commissionRate  Float    @default(2.5)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  transactions    Transaction[]
+  paymentLinks    PaymentLink[]
+  auditLogs       AuditLog[]
+
+  @@index([apiKey])
+  @@map("merchants")
+}
+
+model Transaction {
+  id                String            @id @default(cuid())
+  merchantId        String
+  amount            Float
+  currency          String            @default("PYG")
+  originalAmount    Float?            // Amount in original currency (USD, EUR, etc)
+  originalCurrency  String?           // Original currency code
+  exchangeRate      Float?            // Conversion rate used
+  description       String
+  status            String   @default("PENDING")
+  paymentMethod     String?
+  cardBrand         String?
+  cardLastFour      String?
+  documentType      String
+  documentNumber    String
+  authorizationCode String?
+  bancardTicket     String?
+  errorMessage      String?
+  ipAddress         String?
+  userAgent         String?
+  idempotencyKey    String?  @unique  // Prevent duplicate payments
+  metadata          String?
+  processedAt       DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  merchant          Merchant          @relation(fields: [merchantId], references: [id])
+  paymentLink       PaymentLink?
+  settlement        Settlement?
+  auditLogs         AuditLog[]
+
+  @@index([merchantId, status])
+  @@index([status, createdAt])
+  @@index([idempotencyKey])
+  @@map("transactions")
+}
+
+model PaymentLink {
+  id             String    @id @default(cuid())
+  merchantId     String
+  transactionId  String    @unique
+  shortCode      String    @unique
+  amount         Float
+  currency       String    @default("PYG")
+  description    String
+  expiresAt      DateTime
+  isActive       Int       @default(1)
+  maxUses        Int       @default(1)
+  usedCount      Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  merchant       Merchant     @relation(fields: [merchantId], references: [id])
+  transaction    Transaction  @relation(fields: [transactionId], references: [id])
+
+  @@index([shortCode])
+  @@index([merchantId, isActive])
+  @@map("payment_links")
+}
+
+model Settlement {
+  id              String           @id @default(cuid())
+  transactionId   String           @unique
+  merchantId      String
+  grossAmount     Float
+  commissionAmount Float
+  netAmount       Float
+  status          String    @default("PENDING")
+  settledAt       DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  transaction     Transaction      @relation(fields: [transactionId], references: [id])
+
+  @@index([merchantId, status])
+  @@map("settlements")
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  merchantId     String?
+  transactionId  String?
+  action         String
+  entity         String
+  entityId       String
+  changes        String?
+  ipAddress      String?
+  userAgent      String?
+  createdAt      DateTime @default(now())
+
+  merchant       Merchant?     @relation(fields: [merchantId], references: [id])
+  transaction    Transaction?  @relation(fields: [transactionId], references: [id])
+
+  @@index([merchantId, createdAt])
+  @@index([transactionId])
+  @@map("audit_logs")
+}
+
+// ============================================
+// FINTECH LEDGER - DOUBLE-ENTRY ACCOUNTING
+// ============================================
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  firstName         String
+  lastName          String
+  phone             String?
+  documentType      String
+  documentNumber    String    @unique
+  passwordHash      String
+  twoFactorSecret   String?
+  twoFactorEnabled  Int       @default(0)
+  emailVerified     Int       @default(0)
+  kycStatus         String    @default("PENDING")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  wallet            Wallet?
+  sentTransfers     InternalTransfer[] @relation("SenderTransfers")
+  receivedTransfers InternalTransfer[] @relation("ReceiverTransfers")
+  billPayments      BillPayment[]
+  sessions          UserSession[]
+
+  @@index([email])
+  @@index([documentNumber])
+  @@map("users")
+}
+
+model Wallet {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  balance         Float     @default(0)
+  currency        String    @default("PYG")
+  status          String    @default("ACTIVE")
+  version         Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id])
+  accounts        Account[]
+  ledgerEntries   LedgerEntry[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("wallets")
+}
+
+model Account {
+  id              String    @id @default(cuid())
+  walletId        String
+  accountType     String
+  accountNumber   String    @unique
+  balance         Float     @default(0)
+  currency        String    @default("PYG")
+  status          String    @default("ACTIVE")
+  version         Int       @default(0)  // Optimistic locking
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  wallet          Wallet    @relation(fields: [walletId], references: [id])
+  debitEntries    LedgerEntry[] @relation("DebitAccount")
+  creditEntries   LedgerEntry[] @relation("CreditAccount")
+
+  @@index([walletId])
+  @@index([accountNumber])
+  @@index([accountType])
+  @@map("accounts")
+}
+
+model LedgerEntry {
+  id                String    @id @default(cuid())
+  walletId          String
+  debitAccountId    String
+  creditAccountId   String
+  amount            Float
+  currency          String    @default("PYG")
+  transactionType   String
+  description       String
+  referenceId       String?
+  metadata          String?
+  signature         String
+  status            String    @default("COMPLETED")
+  createdAt         DateTime  @default(now())
+
+  wallet            Wallet    @relation(fields: [walletId], references: [id])
+  debitAccount      Account   @relation("DebitAccount", fields: [debitAccountId], references: [id])
+  creditAccount     Account   @relation("CreditAccount", fields: [creditAccountId], references: [id])
+
+  @@index([walletId])
+  @@index([debitAccountId])
+  @@index([creditAccountId])
+  @@index([transactionType])
+  @@index([referenceId])
+  @@index([createdAt])
+  @@map("ledger_entries")
+}
+
+model InternalTransfer {
+  id                String    @id @default(cuid())
+  senderId          String
+  receiverId        String
+  amount            Float
+  currency          String    @default("PYG")
+  description       String
+  status            String    @default("PENDING")
+  ledgerEntryId     String?
+  twoFactorVerified Int       @default(0)
+  createdAt         DateTime  @default(now())
+  completedAt       DateTime?
+
+  sender            User      @relation("SenderTransfers", fields: [senderId], references: [id])
+  receiver          User      @relation("ReceiverTransfers", fields: [receiverId], references: [id])
+
+  @@index([senderId])
+  @@index([receiverId])
+  @@index([status])
+  @@map("internal_transfers")
+}
+
+model EscrowTransaction {
+  id                String    @id @default(cuid())
+  transactionId     String    @unique
+  amount            Float
+  currency          String    @default("PYG")
+  status            String    @default("HELD")
+  holdUntil         DateTime?
+  releasedAt        DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@index([status])
+  @@index([transactionId])
+  @@map("escrow_transactions")
+}
+
+model BillPayment {
+  id                String    @id @default(cuid())
+  userId            String
+  provider          String
+  serviceType       String
+  accountNumber     String
+  amount            Float
+  currency          String    @default("PYG")
+  status            String    @default("PENDING")
+  referenceNumber   String?
+  ledgerEntryId     String?
+  metadata          String?
+  createdAt         DateTime  @default(now())
+  completedAt       DateTime?
+
+  user              User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([provider])
+  @@index([status])
+  @@map("bill_payments")
+}
+
+model UserSession {
+  id                String    @id @default(cuid())
+  userId            String
+  token             String    @unique
+  ipAddress         String?
+  userAgent         String?
+  expiresAt         DateTime
+  createdAt         DateTime  @default(now())
+
+  user              User      @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([token])
+  @@map("user_sessions")
+}

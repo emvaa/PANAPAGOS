@@ -1,0 +1,35 @@
+### PANAPAGOS - Test Payment Flow
+
+### 1. Crear Link de Pago
+POST http://localhost:4000/v1/checkout/create
+Content-Type: application/json
+
+{
+  "merchantId": "clzxxx",
+  "amount": 150000,
+  "currency": "PYG",
+  "description": "Compra de producto premium",
+  "expirationSeconds": 3600
+}
+
+### 2. Obtener detalles del link (reemplazar {shortCode} con el código generado)
+GET http://localhost:4000/v1/checkout/link/{shortCode}
+
+### 3. Procesar pago
+POST http://localhost:4000/v1/checkout/process
+Content-Type: application/json
+
+{
+  "transactionId": "transaction-id-here",
+  "cardNumber": "4111111111111111",
+  "cardHolder": "JUAN PEREZ",
+  "expiryDate": "12/25",
+  "cvv": "123",
+  "documentType": "CI",
+  "documentNumber": "1234567",
+  "ipAddress": "192.168.1.1",
+  "userAgent": "Mozilla/5.0"
+}
+
+### 4. Consultar estado de transacción
+GET http://localhost:4000/v1/checkout/transaction/{transactionId}
