@@ -22,7 +22,7 @@ export function CreatePaymentModal({ onClose, onSubmit }: CreatePaymentModalProp
     
     try {
       // Obtener merchantId dinámicamente desde el backend
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://panapagos.onrender.com'
       const merchantRes = await fetch(`${apiUrl}/v1/checkout/merchant`)
       
       if (!merchantRes.ok) {

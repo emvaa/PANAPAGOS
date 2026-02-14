@@ -31,7 +31,8 @@ export default function DashboardPage() {
 
   const handleCreatePayment = async (data: any) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/checkout/create`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://panapagos.onrender.com'
+      const response = await fetch(`${apiUrl}/v1/checkout/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

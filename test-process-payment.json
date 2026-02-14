@@ -1,0 +1,14 @@
+{
+  "transactionId": "cmlmpdprm0001sx7m6uwh14q3",
+  "cardNumber": "4242424242424242",
+  "cardHolder": "TEST USER",
+  "expiryDate": "12/28",
+  "cvv": "123",
+  "documentType": "CI",
+  "documentNumber": "1234567",
+  "email": "test@panapagos.com",
+  "ipAddress": "127.0.0.1",
+  "userAgent": "Test Agent",
+  "currency": "USD",
+  "idempotencyKey": "test-demo-exec-001"
+}

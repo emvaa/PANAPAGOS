@@ -32,7 +32,8 @@ export default function CheckoutPage() {
 
   const fetchPaymentDetails = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/checkout/link/${params.shortCode}`)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://panapagos.onrender.com'
+      const response = await fetch(`${apiUrl}/v1/checkout/link/${params.shortCode}`)
       
       if (!response.ok) {
         throw new Error('Payment link not found or expired')
@@ -52,7 +53,8 @@ export default function CheckoutPage() {
     setError(null)
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/v1/checkout/process`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://panapagos.onrender.com'
+      const response = await fetch(`${apiUrl}/v1/checkout/process`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

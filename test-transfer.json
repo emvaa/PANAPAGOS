@@ -1,0 +1,8 @@
+{
+  "fromUserId": "cmlmmcfaj0001e6f7aqvvvvvv",
+  "toUserId": "cmlmmcfaj0002e6f7bqwwwwww",
+  "amount": 50000,
+  "currency": "PYG",
+  "description": "Test transfer for demo",
+  "idempotencyKey": "test-transfer-demo-001"
+}

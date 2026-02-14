@@ -1,0 +1,7 @@
+{
+  "merchantId": "cmlmmcfaj0000e6f71ccad0g0",
+  "amount": 150000,
+  "currency": "PYG",
+  "description": "Test payment for executive demo",
+  "expirationSeconds": 3600
+}
