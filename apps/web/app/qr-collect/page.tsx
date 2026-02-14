@@ -51,7 +51,10 @@ export default function QRCollectPage() {
             </div>
           </motion.div>
         ) : (
-          <DynamicQRGenerator merchantId="cmll2557e0000deqnuasrxhvj" />
+          <DynamicQRGenerator 
+            merchantId="cmll2557e0000deqnuasrxhvj" 
+            type="static"
+          />
         )}
       </div>
     </DashboardLayout>
